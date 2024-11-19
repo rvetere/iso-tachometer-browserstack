@@ -1,0 +1,74 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+_next/
+.next/
+_next_demo/
+next-env.d.ts
+/tmp
+/out-tsc
+test-report.xml
+.swc
+/coverage
+
+# git diff
+.git-changes
+.demo-diffs.json
+
+# dependencies
+node_modules/
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# misc
+.output-test/
+*.log
+*.pfx
+**/*.orig
+/*.svg
+lib/@config/environment/local_overwrite.json
+applications/shop/lib/@webpack/i18n/fallback/
+local.config.override.json
+npm-debug.log
+yarn-error.log
+applications/shop/analyze/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Typescript
+*.tsbuildinfo
+
+# Ignore .npmrc file on build agent
+.npmrc
+
+# Yarn
+**/.pnp.*
+**/.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+!.yarn/setup
+
+# Jest Cache
+.jest/
+
+# Turbo (Not used since 11.01.2024)
+.turbo
+tools/allowed-dependencies/.cache/fileCache.json
+
+# Local telemetry settings
+dev-telemetry.json
+
+# Generated Production files
+*.generated.prod.json

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
+  "sampleSize": 200,
+  "timeout": 5,
+  "benchmarks": [
+    {
+      "name": "Next.js Route /de/joboffer (YAK)",
+      "url": "https://galaxus-ch-preview-pr195720.preview.devinite.com/en/joboffer?DG_TEST=1ad29c5c-982b-4a86-9750-c4a93eec6077",
+      "measurement": {
+        "mode": "performance",
+        "entryName": "first-contentful-paint"
+      }
+    },
+    {
+      "name": "Next.js Route /de/joboffer (SC)",
+      "url": "https://galaxus-ch-preview-pr195757.preview.devinite.com/en/joboffer?DG_TEST=1ad29c5c-982b-4a86-9750-c4a93eec6077",
+      "measurement": {
+        "mode": "performance",
+        "entryName": "first-contentful-paint"
+      }
+    }
+  ]
+}
