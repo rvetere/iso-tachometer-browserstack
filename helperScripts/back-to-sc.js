@@ -73,12 +73,7 @@ async function findAndReplaceImports(directory) {
   try {
     const files = await glob("**/*.{js,jsx,ts,tsx}", {
       cwd: directory,
-      ignore: [
-        "**/node_modules/**",
-        "**/dist/**",
-        "**/build/**",
-        "**/tools/eslint-plugin/**",
-      ],
+      ignore: ["**/node_modules/**", "**/dist/**", "**/tools/eslint-plugin/**"],
       absolute: true,
     });
 
@@ -195,6 +190,15 @@ async function findAndReplaceImports(directory) {
           }
 
           const imports = importMatch[1].split(",").map((i) => i.trim());
+
+          // Handle the new case for `import { styled } from "next-yak"`
+          if (
+            imports.length === 1 &&
+            imports[0] === "styled" &&
+            file.includes("compileFontTokens.ts")
+          ) {
+            return '`import styled from "styled-components";`,';
+          }
 
           if (imports.length === 1) {
             if (imports[0] === "styled") {
