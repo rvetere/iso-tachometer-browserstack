@@ -69,11 +69,58 @@ function skipTests(file, content) {
   return content;
 }
 
+function refactorTextLinesLimiter(content) {
+  // Match the old TextLinesLimiter pattern
+  const oldPattern =
+    /export\s+const\s+TextLinesLimiter\s*=\s*styled\(HtmlTag\)<ITextLinesLimiterProps>\s*`\s*overflow-wrap:\s*break-word;\s*\$\{\s*\(\{\s*\$skip\s*=\s*false\s*\}\)\s*=>\s*!\$skip\s*&&\s*css`[\s\S]*?`\s*\}\s*`/;
+
+  // The new replacement pattern
+  const newPattern = `export const TextLinesLimiter = styled(HtmlTag)<ITextLinesLimiterProps>\`
+  overflow-wrap: break-word;
+
+  \${({ $lines, $skip = false }) =>
+    !$skip
+      ? css\`
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+
+          \${() => {
+            if (typeof $lines === "number") {
+              return css\`
+                -webkit-line-clamp: \${$lines};
+                line-clamp: \${$lines};
+              \`;
+            } else {
+              return css\`
+                -webkit-line-clamp: \${$lines.mobile};
+                line-clamp: \${$lines.mobile};
+
+                \${screenRangeQueries.tabletDesktopWidescreen} {
+                  -webkit-line-clamp: \${$lines.desktop};
+                  line-clamp: \${$lines.desktop};
+                }
+              \`;
+            }
+          }}
+        \`
+      : ""}\`;`;
+
+  // Replace the pattern
+  return content.replace(oldPattern, newPattern);
+}
+
 async function findAndReplaceImports(directory) {
   try {
     const files = await glob("**/*.{js,jsx,ts,tsx}", {
       cwd: directory,
-      ignore: ["**/node_modules/**", "**/dist/**", "**/tools/eslint-plugin/**"],
+      ignore: [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/tools/eslint-plugin/**",
+        "**/typedocs/**",
+        "**/typedocs-proptable-mapper/**",
+      ],
       absolute: true,
     });
 
@@ -85,6 +132,16 @@ async function findAndReplaceImports(directory) {
       }
       let content = await fs.readFile(file, "utf8");
       let hasChanged = false;
+
+      // Add TextLinesLimiter refactoring
+      if (file.includes("textLinesLimiter.tsx")) {
+        const newContent = refactorTextLinesLimiter(content);
+        if (newContent !== content) {
+          content = newContent;
+          hasChanged = true;
+          console.log("Refactored TextLinesLimiter component");
+        }
+      }
 
       // Refactor GalaxusImage if this is productsImage.tsx
       if (file.includes("productsImage.tsx")) {
@@ -215,106 +272,8 @@ async function findAndReplaceImports(directory) {
           }
         }
 
-        // Handle StyledSvg imports
-        if (
-          line.includes('StyledSvg"') &&
-          line.includes('from "@blocks/icons"')
-        ) {
-          hasChanged = true;
-          return line.replace('StyledSvg"', 'StyledSvgDeprecated"');
-        }
-
-        // Handle StyledSvg in template literals
-        if (line.includes("${StyledSvg}")) {
-          hasChanged = true;
-          newLine = line.replace(
-            /\$\{StyledSvg\}\s*([{,])/g,
-            "${StyledSvgDeprecated}$1"
-          );
-        }
-
         return newLine;
       });
-
-      // Check if StyledSvgDeprecated is needed and not already imported
-      const needsStyledSvgDeprecated = newLines.some((line) =>
-        line.includes("${StyledSvgDeprecated}")
-      );
-
-      const hasStyledSvgDeprecatedImport = (() => {
-        let insideIconsImport = false;
-        for (const line of newLines) {
-          const trimmedLine = line.trim();
-
-          if (
-            trimmedLine.includes("StyledSvgDeprecated") &&
-            trimmedLine.includes('from "@blocks/icons"')
-          ) {
-            return true;
-          }
-
-          if (
-            trimmedLine.startsWith("import {") &&
-            !trimmedLine.includes("} from") &&
-            line.includes("@blocks/icons")
-          ) {
-            insideIconsImport = true;
-            if (trimmedLine.includes("StyledSvgDeprecated")) {
-              return true;
-            }
-            continue;
-          }
-
-          if (insideIconsImport && !trimmedLine.includes("} from")) {
-            if (trimmedLine.includes("StyledSvgDeprecated")) {
-              return true;
-            }
-            continue;
-          }
-
-          if (insideIconsImport && trimmedLine.includes("} from")) {
-            insideIconsImport = false;
-            if (trimmedLine.includes("StyledSvgDeprecated")) {
-              return true;
-            }
-          }
-        }
-        return false;
-      })();
-
-      if (needsStyledSvgDeprecated && !hasStyledSvgDeprecatedImport) {
-        let lastImportIndex = -1;
-        let insideMultilineImport = false;
-
-        for (let i = 0; i < newLines.length; i++) {
-          const line = newLines[i].trim();
-
-          if (line.startsWith("import {") && !line.includes("} from")) {
-            insideMultilineImport = true;
-            lastImportIndex = i;
-            continue;
-          }
-
-          if (insideMultilineImport && line.includes("} from")) {
-            insideMultilineImport = false;
-            lastImportIndex = i;
-            continue;
-          }
-
-          if (line.startsWith("import ") && line.includes(" from ")) {
-            lastImportIndex = i;
-          }
-        }
-
-        if (lastImportIndex !== -1) {
-          newLines.splice(
-            lastImportIndex + 1,
-            0,
-            'import { StyledSvgDeprecated } from "@blocks/icons";'
-          );
-          hasChanged = true;
-        }
-      }
 
       if (hasChanged) {
         const newContent = newLines.join("\n");
