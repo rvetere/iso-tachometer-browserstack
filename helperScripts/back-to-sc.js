@@ -118,6 +118,7 @@ async function findAndReplaceImports(directory) {
         "**/node_modules/**",
         "**/dist/**",
         "**/tools/eslint-plugin/**",
+        "**/demo-studio/**",
         "**/typedocs/**",
         "**/typedocs-proptable-mapper/**",
       ],
@@ -127,7 +128,11 @@ async function findAndReplaceImports(directory) {
     console.log(`Found ${files.length} files to process`);
 
     for (const file of files) {
-      if (file.includes("back-to-sc")) {
+      if (
+        file.includes("back-to-sc") ||
+        file.includes("getTheme") ||
+        file.includes("themeProvider")
+      ) {
         continue;
       }
       let content = await fs.readFile(file, "utf8");
@@ -161,12 +166,13 @@ async function findAndReplaceImports(directory) {
           console.log("Refactored ContainerFluid styles");
         }
       }
+
       if (file.includes("libraries/page-header/src/pageHeadStyles")) {
         const newContent = refactorPageHeadStyles(content);
         if (newContent !== content) {
           content = newContent;
           hasChanged = true;
-          console.log("Refactored ContainerFluid styles");
+          console.log("Refactored PageHead styles");
         }
       }
 
@@ -248,27 +254,29 @@ async function findAndReplaceImports(directory) {
 
           const imports = importMatch[1].split(",").map((i) => i.trim());
 
-          // Handle the new case for `import { styled } from "next-yak"`
-          if (
-            imports.length === 1 &&
-            imports[0] === "styled" &&
-            file.includes("compileFontTokens.ts")
-          ) {
-            return '`import styled from "styled-components";`,';
+          // Special case for compileFontTokens.ts
+          if (file.includes("compileFontTokens.ts")) {
+            if (imports.length === 1 && imports[0] === "styled") {
+              return '`import styled from "styled-components";`,';
+            }
           }
 
-          if (imports.length === 1) {
-            if (imports[0] === "styled") {
+          // Handle various import combinations
+          if (imports.includes("styled")) {
+            const otherImports = imports
+              .filter((i) => i !== "styled")
+              .filter(Boolean);
+
+            if (otherImports.length === 0) {
               return 'import styled from "styled-components";';
-            } else if (imports[0] === "css") {
-              return 'import { css } from "styled-components";';
+            } else {
+              return `import styled, { ${otherImports.join(
+                ", "
+              )} } from "styled-components";`;
             }
-          } else if (
-            imports.length === 2 &&
-            imports.includes("styled") &&
-            imports.includes("css")
-          ) {
-            return 'import styled, { css } from "styled-components";';
+          } else {
+            // Handle cases without styled
+            return `import { ${imports.join(", ")} } from "styled-components";`;
           }
         }
 
