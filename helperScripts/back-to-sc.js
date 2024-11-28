@@ -35,6 +35,10 @@ function refactorContainerFluid(content) {
 }
 
 function refactorPageHeadStyles(content) {
+  if (content.includes("styled-components")) {
+    return content;
+  }
+
   // First, replace the outer destructuring to include both props
   content = content.replace(
     /\$\{[\s\n]*\(\{[\s\n]*\$showSmartAppBanner[\s\n]*\}\)[\s\n]*=>/,
@@ -50,36 +54,36 @@ function refactorPageHeadStyles(content) {
   return content;
 }
 
-function skipTests(file, content) {
-  // Skip tests if this is position.test.tsx
-  if (file.includes("position.test.tsx")) {
-    content = content.replace(
-      /(test\()(['"`]selected position packing condition dropdown shows all possible options['"`])/g,
-      "test.skip($2"
-    );
+// function skipTests(file, content) {
+//   // Skip tests if this is position.test.tsx
+//   if (file.includes("position.test.tsx")) {
+//     content = content.replace(
+//       /(test\()(['"`]selected position packing condition dropdown shows all possible options['"`])/g,
+//       "test.skip($2"
+//     );
 
-    content = content.replace(
-      /(test\()(['"`]selected position return reason dropdown shows all possible options['"`])/g,
-      "test.skip($2"
-    );
-    content = `/* eslint-disable jest/no-disabled-tests */
-    ${content}`;
-  }
+//     content = content.replace(
+//       /(test\()(['"`]selected position return reason dropdown shows all possible options['"`])/g,
+//       "test.skip($2"
+//     );
+//     content = `/* eslint-disable jest/no-disabled-tests */
+//     ${content}`;
+//   }
 
-  // Skip tests in overviewFilter.tracking.test
-  if (file.includes("overviewFilter.tracking.test")) {
-    // Add eslint disable comment at the top
-    if (!content.includes("/* eslint-disable jest/no-disabled-tests */")) {
-      content = `/* eslint-disable jest/no-disabled-tests */
-${content}`;
-    }
+//   // Skip tests in overviewFilter.tracking.test
+//   if (file.includes("overviewFilter.tracking.test")) {
+//     // Add eslint disable comment at the top
+//     if (!content.includes("/* eslint-disable jest/no-disabled-tests */")) {
+//       content = `/* eslint-disable jest/no-disabled-tests */
+// ${content}`;
+//     }
 
-    // Replace it.each with it.skip.each
-    content = content.replace(/it\.each/g, "it.skip.each");
-  }
+//     // Replace it.each with it.skip.each
+//     content = content.replace(/it\.each/g, "it.skip.each");
+//   }
 
-  return content;
-}
+//   return content;
+// }
 
 function refactorTextLinesLimiter(content) {
   // Match the old TextLinesLimiter pattern
@@ -188,12 +192,12 @@ async function findAndReplaceImports(directory) {
         }
       }
 
-      const newContent = skipTests(file, content);
-      if (newContent !== content) {
-        content = newContent;
-        hasChanged = true;
-        console.log("Skipped tests");
-      }
+      // const newContent = skipTests(file, content);
+      // if (newContent !== content) {
+      //   content = newContent;
+      //   hasChanged = true;
+      //   console.log("Skipped tests");
+      // }
 
       // Handle complete content replacements first
       if (file.includes("baseLinkStyles")) {
