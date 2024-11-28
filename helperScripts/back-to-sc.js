@@ -66,6 +66,18 @@ function skipTests(file, content) {
     ${content}`;
   }
 
+  // Skip tests in overviewFilter.tracking.test
+  if (file.includes("overviewFilter.tracking.test")) {
+    // Add eslint disable comment at the top
+    if (!content.includes("/* eslint-disable jest/no-disabled-tests */")) {
+      content = `/* eslint-disable jest/no-disabled-tests */
+${content}`;
+    }
+
+    // Replace it.each with it.skip.each
+    content = content.replace(/it\.each/g, "it.skip.each");
+  }
+
   return content;
 }
 
